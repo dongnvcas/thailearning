@@ -1,0 +1,233 @@
+
+<!DOCTYPE html>
+
+<html lang="th">
+<head>
+<meta charset="utf-8"/>
+<title>Thai Practice App</title>
+<style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(to right, #e0f7fa, #e8f5e9);
+      text-align: center;
+      padding: 20px;
+    }
+    h1 {
+      color: #2e7d32;
+    }
+    .button {
+      padding: 10px 20px;
+      margin: 10px;
+      font-size: 18px;
+      border: none;
+      border-radius: 8px;
+      background-color: #66bb6a;
+      color: white;
+      cursor: pointer;
+    }
+    .button:hover {
+      background-color: #43a047;
+    }
+    .char-display {
+      font-size: 72px;
+      margin: 20px;
+      color: #1b5e20;
+    }
+    .quiz-option {
+      font-size: 48px;
+      margin: 10px;
+      padding: 10px;
+      border: 2px solid #ccc;
+      border-radius: 10px;
+      cursor: pointer;
+      display: inline-block;
+      width: 100px;
+    }
+    .quiz-option:hover {
+      background-color: #c8e6c9;
+    }
+    .feedback {
+      font-size: 24px;
+      margin-top: 10px;
+    }
+    .char-select {
+      display: inline-block;
+      margin: 5px;
+      font-size: 24px;
+    }
+    .section {
+      margin: 20px 0;
+    }
+  </style>
+</head>
+<body>
+<h1>Thai Practice App</h1>
+<div class="section" id="selectionSection">
+<h2>Chọn chữ cái bạn muốn học</h2>
+<div id="charSelection"></div>
+<button class="button" onclick="startPractice()">Bắt đầu học</button>
+</div>
+<div class="section" id="practiceSection" style="display:none;">
+<button class="button" onclick="showMeaning()">Hiển thị nghĩa</button>
+<button class="button" onclick="showAnswer()">Hiện đáp án</button>
+<div class="char-display" id="meaningDisplay"></div>
+<div class="char-display" id="answerDisplay"></div>
+</div>
+<div class="section" id="quizSection" style="display:none;">
+<h2>Trắc nghiệm</h2>
+<div class="char-display" id="quizMeaning"></div>
+<div id="quizOptions"></div>
+<div class="feedback" id="quizFeedback"></div>
+<button class="button" onclick="generateQuiz()">Bắt đầu câu hỏi mới</button>
+</div>
+<script>
+    const allCharacters = [
+      { thai: "ก", meaning: "con gà" },
+      { thai: "ข", meaning: "quả trứng" },
+      { thai: "ค", meaning: "con trâu" },
+      { thai: "ฆ", meaning: "chuông" },
+      { thai: "ง", meaning: "con rắn" },
+      { thai: "จ", meaning: "cái đĩa" },
+      { thai: "ฉ", meaning: "chũm chọe" },
+      { thai: "ช", meaning: "con voi" },
+      { thai: "ฌ", meaning: "cây" },
+      { thai: "ญ", meaning: "phụ nữ" },
+      { thai: "ฎ", meaning: "vương miện" },
+      { thai: "ฏ", meaning: "cây giáo" },
+      { thai: "ฐ", meaning: "bệ đỡ" },
+      { thai: "ฑ", meaning: "nhân vật nữ" },
+      { thai: "ฒ", meaning: "ông già" },
+      { thai: "ณ", meaning: "nhà sư" },
+      { thai: "ด", meaning: "trẻ em" },
+      { thai: "ต", meaning: "con rùa" },
+      { thai: "ถ", meaning: "túi" },
+      { thai: "ท", meaning: "lính" },
+      { thai: "ธ", meaning: "cờ" },
+      { thai: "น", meaning: "chuột" },
+      { thai: "บ", meaning: "lá cây" },
+      { thai: "ป", meaning: "cá" },
+      { thai: "ผ", meaning: "ong" },
+      { thai: "ฝ", meaning: "nắp vung" },
+      { thai: "พ", meaning: "khay" },
+      { thai: "ฟ", meaning: "răng" },
+      { thai: "ภ", meaning: "thuyền buồm" },
+      { thai: "ม", meaning: "ngựa" },
+      { thai: "ย", meaning: "khổng lồ" },
+      { thai: "ร", meaning: "thuyền" },
+      { thai: "ล", meaning: "khỉ" },
+      { thai: "ว", meaning: "vòng tay" },
+      { thai: "ศ", meaning: "gian phòng" },
+      { thai: "ษ", meaning: "đạo sĩ" },
+      { thai: "ส", meaning: "con hổ" },
+      { thai: "ห", meaning: "rương" },
+      { thai: "ฬ", meaning: "diều" },
+      { thai: "อ", meaning: "cái bát" },
+      { thai: "ฮ", meaning: "cú mèo" },
+      { thai: "ะ", meaning: "a (ngắn)" },
+      { thai: "า", meaning: "aa (dài)" },
+      { thai: "ิ", meaning: "i (ngắn)" },
+      { thai: "ี", meaning: "ii (dài)" },
+      { thai: "ึ", meaning: "ue (ngắn)" },
+      { thai: "ื", meaning: "uee (dài)" },
+      { thai: "ุ", meaning: "u (ngắn)" },
+      { thai: "ู", meaning: "uu (dài)" },
+      { thai: "เ", meaning: "e" },
+      { thai: "แ", meaning: "ae" },
+      { thai: "โ", meaning: "o" },
+      { thai: "ใ", meaning: "ai" },
+      { thai: "ไ", meaning: "ai" },
+      { thai: "ำ", meaning: "am" }
+    ];
+
+    function renderCharSelection() {
+      const container = document.getElementById("charSelection");
+      container.innerHTML = "";
+      allCharacters.forEach((item, index) => {
+        const label = document.createElement("label");
+        label.className = "char-select";
+        label.innerHTML = `<input type="checkbox" value="${index}" /> ${item.thai}`;
+        container.appendChild(label);
+      });
+    }
+
+    function startPractice() {
+      const checkboxes = document.querySelectorAll("#charSelection input[type='checkbox']");
+      const selected = [];
+      checkboxes.forEach(cb => {
+        if (cb.checked) selected.push(allCharacters[parseInt(cb.value)]);
+      });
+      if (selected.length === 0) {
+        alert("Vui lòng chọn ít nhất một chữ cái.");
+        return;
+      }
+      localStorage.setItem("selectedItems", JSON.stringify(selected));
+      document.getElementById("selectionSection").style.display = "none";
+      document.getElementById("practiceSection").style.display = "block";
+      document.getElementById("quizSection").style.display = "block";
+    }
+
+    function showMeaning() {
+      const selectedItems = JSON.parse(localStorage.getItem("selectedItems")) || [];
+      if (selectedItems.length === 0) return;
+      const randomItem = selectedItems[Math.floor(Math.random() * selectedItems.length)];
+      document.getElementById("meaningDisplay").innerText = randomItem.meaning;
+      document.getElementById("answerDisplay").innerText = "";
+      window.currentThaiChar = randomItem.thai;
+      speakThai(randomItem.thai);
+    }
+
+    function showAnswer() {
+      if (window.currentThaiChar) {
+        document.getElementById("answerDisplay").innerText = window.currentThaiChar;
+      } else {
+        document.getElementById("answerDisplay").innerText = "Chưa có dữ liệu.";
+      }
+    }
+
+    function speakThai(text) {
+      if ('speechSynthesis' in window) {
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.lang = 'th-TH';
+        speechSynthesis.speak(utterance);
+      }
+    }
+
+    function generateQuiz() {
+      const selectedItems = JSON.parse(localStorage.getItem("selectedItems")) || [];
+      if (selectedItems.length < 4) {
+        alert("Cần chọn ít nhất 4 chữ cái để làm trắc nghiệm.");
+        return;
+      }
+      const correctItem = selectedItems[Math.floor(Math.random() * selectedItems.length)];
+      const options = [correctItem];
+      while (options.length < 4) {
+        const candidate = selectedItems[Math.floor(Math.random() * selectedItems.length)];
+        if (!options.includes(candidate)) options.push(candidate);
+      }
+      options.sort(() => Math.random() - 0.5);
+      document.getElementById("quizMeaning").innerText = correctItem.meaning;
+      const container = document.getElementById("quizOptions");
+      container.innerHTML = "";
+      options.forEach(opt => {
+        const div = document.createElement("div");
+        div.className = "quiz-option";
+        div.innerText = opt.thai;
+        div.onclick = () => {
+          speakThai(opt.thai);
+          const feedback = document.getElementById("quizFeedback");
+          if (opt.thai === correctItem.thai) {
+            feedback.innerText = "✅ Chính xác!";
+            feedback.style.color = "green";
+          } else {
+            feedback.innerText = "❌ Sai rồi!";
+            feedback.style.color = "red";
+          }
+        };
+        container.appendChild(div);
+      });
+    }
+
+    renderCharSelection();
+  </script>
+</body>
+</html>
